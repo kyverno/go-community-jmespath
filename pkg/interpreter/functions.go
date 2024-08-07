@@ -24,6 +24,8 @@ type functionCaller struct {
 
 func NewFunctionCaller(funcs ...functions.FunctionEntry) *functionCaller {
 	fTable := map[string]functionEntry{}
+
+	funcs = append(functions.GetDefaultFunctions(), funcs...)
 	for _, f := range funcs {
 		fTable[f.Name] = functionEntry{
 			arguments: f.Arguments,
