@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmespath-community/go-jmespath/pkg/parsing"
+	"github.com/kyverno/go-community-jmespath/pkg/parsing"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,6 +85,10 @@ func runSyntaxTestCase(assert *assert.Assertions, given interface{}, testcase Te
 	// an error when we try to evaluate the expression.
 	// fmt.Println(fmt.Sprintf("%s: %s", filename, testcase.Expression))
 	_, err := Search(testcase.Expression, given)
+	if _, ok := err.(NotFoundError); ok {
+		err = nil
+	}
+
 	assert.NotNil(err, fmt.Sprintf("Expression: %s", testcase.Expression))
 }
 
@@ -105,6 +109,11 @@ func runTestCase(assert *assert.Assertions, given interface{}, testcase TestCase
 		return
 	}
 	actual, err := Search(testcase.Expression, given)
+	if _, ok := err.(NotFoundError); ok {
+		err = nil
+		actual = nil
+	}
+
 	if assert.Nil(err, fmt.Sprintf("Expression: %s", testcase.Expression)) {
 		assert.Equal(testcase.Result, actual, fmt.Sprintf("Expression: %s", testcase.Expression))
 	}

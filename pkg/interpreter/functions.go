@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	jperror "github.com/jmespath-community/go-jmespath/pkg/error"
-	"github.com/jmespath-community/go-jmespath/pkg/functions"
-	"github.com/jmespath-community/go-jmespath/pkg/util"
+	jperror "github.com/kyverno/go-community-jmespath/pkg/error"
+	"github.com/kyverno/go-community-jmespath/pkg/functions"
+	"github.com/kyverno/go-community-jmespath/pkg/util"
 )
 
 type FunctionCaller interface {

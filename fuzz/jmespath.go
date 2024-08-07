@@ -1,6 +1,6 @@
 package jmespath
 
-import "github.com/jmespath-community/go-jmespath/pkg/parsing"
+import "github.com/kyverno/go-community-jmespath/pkg/parsing"
 
 // Fuzz will fuzz test the JMESPath parser.
 func Fuzz(data []byte) int {

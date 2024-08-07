@@ -1,10 +1,11 @@
 package jmespath
 
 import (
-	"github.com/jmespath-community/go-jmespath/pkg/api"
-	"github.com/jmespath-community/go-jmespath/pkg/functions"
-	"github.com/jmespath-community/go-jmespath/pkg/interpreter"
-	"github.com/jmespath-community/go-jmespath/pkg/parsing"
+	"github.com/kyverno/go-community-jmespath/pkg/api"
+	jperror "github.com/kyverno/go-community-jmespath/pkg/error"
+	"github.com/kyverno/go-community-jmespath/pkg/functions"
+	"github.com/kyverno/go-community-jmespath/pkg/interpreter"
+	"github.com/kyverno/go-community-jmespath/pkg/parsing"
 )
 
 // api types
@@ -50,3 +51,7 @@ const (
 	JpExpref      = functions.JpExpref
 	JpAny         = functions.JpAny
 )
+
+// error types
+
+type NotFoundError = jperror.NotFoundError

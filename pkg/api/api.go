@@ -3,8 +3,8 @@ package api
 import (
 	"strconv"
 
-	"github.com/jmespath-community/go-jmespath/pkg/interpreter"
-	"github.com/jmespath-community/go-jmespath/pkg/parsing"
+	"github.com/kyverno/go-community-jmespath/pkg/interpreter"
+	"github.com/kyverno/go-community-jmespath/pkg/parsing"
 )
 
 // JMESPath is the representation of a compiled JMES path query. A JMESPath is

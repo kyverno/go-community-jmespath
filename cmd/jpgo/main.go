@@ -23,8 +23,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/jmespath-community/go-jmespath/pkg/api"
-	"github.com/jmespath-community/go-jmespath/pkg/parsing"
+	"github.com/kyverno/go-community-jmespath/pkg/api"
+	"github.com/kyverno/go-community-jmespath/pkg/parsing"
 	"github.com/spf13/cobra"
 )
 

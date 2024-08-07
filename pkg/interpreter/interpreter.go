@@ -7,10 +7,11 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/jmespath-community/go-jmespath/pkg/binding"
-	"github.com/jmespath-community/go-jmespath/pkg/functions"
-	"github.com/jmespath-community/go-jmespath/pkg/parsing"
-	"github.com/jmespath-community/go-jmespath/pkg/util"
+	"github.com/kyverno/go-community-jmespath/pkg/binding"
+	jperror "github.com/kyverno/go-community-jmespath/pkg/error"
+	"github.com/kyverno/go-community-jmespath/pkg/functions"
+	"github.com/kyverno/go-community-jmespath/pkg/parsing"
+	"github.com/kyverno/go-community-jmespath/pkg/util"
 )
 
 var DefaultFunctionCaller FunctionCaller = NewFunctionCaller(functions.GetDefaultFunctions()...)
@@ -61,7 +62,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 	case parsing.ASTArithmeticUnaryExpression:
 		expr, err := intr.execute(node.Children[0], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		num, ok := util.ToNumber(expr)
 		if !ok {
@@ -76,11 +79,15 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 	case parsing.ASTArithmeticExpression:
 		left, err := intr.execute(node.Children[0], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		right, err := intr.execute(node.Children[1], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		leftNum, ok := util.ToNumber(left)
 		if !ok {
@@ -109,11 +116,15 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 	case parsing.ASTComparator:
 		left, err := intr.execute(node.Children[0], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		right, err := intr.execute(node.Children[1], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		switch node.Value {
 		case parsing.TOKEQ:
@@ -141,14 +152,23 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 		}
 	case parsing.ASTExpRef:
 		return func(data interface{}) (interface{}, error) {
-			return intr.execute(node.Children[0], data, functionCaller)
+			result, err := intr.execute(node.Children[0], data, functionCaller)
+			if err != nil {
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
+			}
+
+			return result, nil
 		}, nil
 	case parsing.ASTFunctionExpression:
 		resolvedArgs := []interface{}{}
 		for _, arg := range node.Children {
 			current, err := intr.execute(arg, value, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 			resolvedArgs = append(resolvedArgs, current)
 		}
@@ -172,12 +192,16 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 		for _, element := range sliceType {
 			result, err := intr.execute(compareNode, element, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 			if !util.IsFalse(result) {
 				current, err := intr.execute(node.Children[1], element, functionCaller)
 				if err != nil {
-					return nil, err
+					if _, ok := err.(jperror.NotFoundError); !ok {
+						return nil, err
+					}
 				}
 				if current != nil {
 					collected = append(collected, current)
@@ -223,11 +247,14 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 	case parsing.ASTBindings:
 		bindings := intr.bindings
 		for _, child := range node.Children {
-			if value, err := intr.execute(child.Children[1], value, functionCaller); err != nil {
-				return nil, err
-			} else {
-				bindings = bindings.Register(child.Children[0].Value.(string), binding.NewBinding(value))
+			value, err := intr.execute(child.Children[1], value, functionCaller)
+			if err != nil {
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
+
+			bindings = bindings.Register(child.Children[0].Value.(string), binding.NewBinding(value))
 		}
 		intr.bindings = bindings
 		// doesn't mutate value
@@ -240,13 +267,20 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 			intr.bindings = bindings
 		}()
 		// evalute bindings first, then evaluate expression
-		if _, err := intr.execute(node.Children[0], value, functionCaller); err != nil {
-			return nil, err
-		} else if value, err := intr.execute(node.Children[1], value, functionCaller); err != nil {
-			return nil, err
-		} else {
-			return value, nil
+		_, err := intr.execute(node.Children[0], value, functionCaller)
+		if err != nil {
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
+		value, err := intr.execute(node.Children[1], value, functionCaller)
+		if err != nil {
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
+		}
+
+		return value, nil
 	case parsing.ASTVariable:
 		if value, err := binding.Resolve(node.Value.(string), intr.bindings); err != nil {
 			return nil, err
@@ -286,7 +320,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 		for _, child := range node.Children {
 			current, err := intr.execute(child, value, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 			key := child.Value.(string)
 			collected[key] = current
@@ -297,7 +333,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 		for _, child := range node.Children {
 			current, err := intr.execute(child, value, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 			collected = append(collected, current)
 		}
@@ -305,19 +343,27 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 	case parsing.ASTOrExpression:
 		matched, err := intr.execute(node.Children[0], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); ok {
+				matched = nil
+			} else {
+				return nil, err
+			}
 		}
 		if util.IsFalse(matched) {
 			matched, err = intr.execute(node.Children[1], value, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 		}
 		return matched, nil
 	case parsing.ASTAndExpression:
 		matched, err := intr.execute(node.Children[0], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		if util.IsFalse(matched) {
 			return matched, nil
@@ -326,7 +372,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 	case parsing.ASTNotExpression:
 		matched, err := intr.execute(node.Children[0], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		if util.IsFalse(matched) {
 			return true, nil
@@ -338,7 +386,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 		for _, child := range node.Children {
 			result, err = intr.execute(child, result, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 		}
 		return result, nil
@@ -364,7 +414,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 
 		left, err := intr.execute(node.Children[0], value, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 
 		sliceType, ok := left.([]interface{})
@@ -383,7 +435,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 		for _, element := range sliceType {
 			current, err = intr.execute(node.Children[1], element, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 			if current != nil {
 				collected = append(collected, current)
@@ -439,7 +493,9 @@ func (intr *treeInterpreter) execute(node parsing.ASTNode, value interface{}, fu
 		for _, element := range values {
 			current, err := intr.execute(node.Children[1], element, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 			if current != nil {
 				collected = append(collected, current)
@@ -454,9 +510,15 @@ func extractField(value any, field string) (any, error) {
 	if value == nil {
 		return nil, nil
 	}
+
 	if m, ok := value.(map[string]interface{}); ok {
-		return m[field], nil
+		if val, ok := m[field]; ok {
+			return val, nil
+		} else {
+			return nil, jperror.NotFound(field)
+		}
 	}
+
 	return extractFieldUsingReflection(reflect.ValueOf(value), field)
 }
 
@@ -533,12 +595,16 @@ func (intr *treeInterpreter) filterProjectionWithReflection(node parsing.ASTNode
 		element := v.Index(i).Interface()
 		result, err := intr.execute(compareNode, element, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		if !util.IsFalse(result) {
 			current, err := intr.execute(node.Children[1], element, functionCaller)
 			if err != nil {
-				return nil, err
+				if _, ok := err.(jperror.NotFoundError); !ok {
+					return nil, err
+				}
 			}
 			if current != nil {
 				collected = append(collected, current)
@@ -555,7 +621,9 @@ func (intr *treeInterpreter) projectWithReflection(node parsing.ASTNode, value i
 		element := v.Index(i).Interface()
 		result, err := intr.execute(node.Children[1], element, functionCaller)
 		if err != nil {
-			return nil, err
+			if _, ok := err.(jperror.NotFoundError); !ok {
+				return nil, err
+			}
 		}
 		if result != nil {
 			collected = append(collected, result)

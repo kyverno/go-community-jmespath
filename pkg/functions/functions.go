@@ -12,8 +12,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	jperror "github.com/jmespath-community/go-jmespath/pkg/error"
-	"github.com/jmespath-community/go-jmespath/pkg/util"
+	jperror "github.com/kyverno/go-community-jmespath/pkg/error"
+	"github.com/kyverno/go-community-jmespath/pkg/util"
 )
 
 type (
