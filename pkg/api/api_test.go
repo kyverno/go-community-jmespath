@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/jmespath-community/go-jmespath/pkg/functions"
-	"github.com/jmespath-community/go-jmespath/pkg/interpreter"
+	"github.com/kyverno/go-community-jmespath/pkg/functions"
+	"github.com/kyverno/go-community-jmespath/pkg/interpreter"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -125,7 +125,8 @@ func TestSearch(t *testing.T) {
 				"a": 42.0,
 			},
 		},
-		want: nil,
+		want:    nil,
+		wantErr: true,
 	}, {
 		args: args{
 			expression: "`null` | {foo: @}",

@@ -1,8 +1,8 @@
 # go-jmespath - A JMESPath implementation in Go
 
-[![GoDoc](https://godoc.org/github.com/jmespath-community/go-jmespath?status.svg)](https://godoc.org/github.com/jmespath-community/go-jmespath)
+[![GoDoc](https://godoc.org/github.com/kyverno/go-community-jmespath?status.svg)](https://godoc.org/github.com/kyverno/go-community-jmespath)
 [![codecov](https://codecov.io/gh/jmespath-community/go-jmespath/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jmespath-community/go-jmespath/branch/main)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jmespath-community/go-jmespath)](https://goreportcard.com/report/github.com/jmespath-community/go-jmespath)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kyverno/go-community-jmespath)](https://goreportcard.com/report/github.com/kyverno/go-community-jmespath)
 ![License: Apache-2.0](https://img.shields.io/github/license/jmespath-community/go-jmespath?color=blue)
 
 go-jmespath is a GO implementation of JMESPath,
@@ -15,7 +15,7 @@ you use, `jmespath.Search`:
 
 
 ```go
-> import "github.com/jmespath-community/go-jmespath"
+> import "github.com/kyverno/go-community-jmespath"
 >
 > var jsondata = []byte(`{"foo": {"bar": {"baz": [0, 1, 2, 3, 4]}}}`) // your data
 > var data interface{}

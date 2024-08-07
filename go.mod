@@ -1,4 +1,4 @@
-module github.com/jmespath-community/go-jmespath
+module github.com/kyverno/go-community-jmespath
 
 go 1.18
 

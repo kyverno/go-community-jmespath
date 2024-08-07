@@ -30,7 +30,7 @@ htmlc:
 	go test -cover -coverpkg ./... -coverprofile="/tmp/jpcov" ./... && go tool cover -html="/tmp/jpcov" && unlink /tmp/jpcov
 
 buildfuzz:
-	go-fuzz-build github.com/jmespath-community/go-jmespath/fuzz
+	go-fuzz-build github.com/kyverno/go-community-jmespath/fuzz
 
 fuzz: buildfuzz
 	go-fuzz -bin=./jmespath-fuzz.zip -workdir=fuzz/testdata

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/jmespath-community/go-jmespath/pkg/parsing"
+	"github.com/kyverno/go-community-jmespath/pkg/parsing"
 	"github.com/stretchr/testify/assert"
 )
 
